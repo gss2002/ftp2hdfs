@@ -9,4 +9,5 @@
 .settings
 .factorypath
 pom.xml.versionsBackup
+.pydevproject
 target

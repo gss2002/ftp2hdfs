@@ -2,27 +2,47 @@ package org.apache.hadoop.ftp;
 
 
 
-
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
  
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.net.PrintCommandListener;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPClientConfig;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.ftp.parser.MVSFTPEntryParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
 
@@ -59,12 +79,17 @@ public class FTP2HDFSClient {
     String ftpHost = null;
  
     public static void downloadFile0(String remoteFilePath, String hdfsPath) {
+        FileOutputStream fos;
 		try {
+			//fos = new FileOutputStream(localFilePath);
+            //this.ftp.retrieveFile(remoteFilePath, fos);
 			
 			InputStream in = null;
+			//BufferedOutputStream out = null;
 
             // APPROACH #2: using InputStream retrieveFileStream(String)
             String remoteFile = remoteFilePath;
+            //String downloadFile = localFilePath;
             
 
             Path path = new Path(hdfsPath);
@@ -74,7 +99,11 @@ public class FTP2HDFSClient {
             }
 
             // Create a new file and write data to it.
-         
+            //FSDataOutputStream out = fileSystem.create(path);
+            //InputStream in = new BufferedInputStream(new FileInputStream(new File(source)));
+
+            
+            
            // OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(downloadFile));
             FSDataOutputStream out = fileSystem.create(path);
 
@@ -83,7 +112,9 @@ public class FTP2HDFSClient {
                 int bytes_read = 0;
                 in = ftp.retrieveFileStream(remoteFile);
 
-    
+               
+                //out = new BufferedOutputStream(new FileOutputStream(new File(downloadFile)));
+                //out = new BufferedOutputStream(new PipedOutputStream());
 
                 do {
                     bytes_read = in.read(buf, 0, buf.length);
@@ -181,7 +212,7 @@ public class FTP2HDFSClient {
                 }
             });
         
-            //ftpDownloader.downloadFile("\'GSS.RESOLVED.ENR.MNTH.M201406.G0001V00\'", "/user/username/data/");
+            //ftpDownloader.downloadFile("\'GSS.RESOLVED.ENR.MNTH.M201406.G0001V00\'", "/user/username/claim/");
             //ftpDownloader.listFiles("\'GSS.RESOLVED.ENR.MNTH'");
 
         } catch (Exception e) {
@@ -221,7 +252,7 @@ public class FTP2HDFSClient {
 	    options.addOption("ftp_userid", true, "FTP Userid --ftp_userid userid");
 	    options.addOption("ftp_pwd", true, "FTP Password --ftp_pwd password");
 	    options.addOption("hdfs_outdir", true, "HDFS Output Dir --hdfs_outdir");
-	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename DATA20011");
+	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename DATA2011");
 	    options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/user.keytab");
 	    options.addOption("krb_upn", true, "Kerberos Princpial for Keytab to Connect to HDFS --krb_upn user@EXAMP.EXAMPLE.COM");
 	    options.addOption("help", false, "Display help");
