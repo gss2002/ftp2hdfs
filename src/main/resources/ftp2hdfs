@@ -1,0 +1,19 @@
+#!/bin/sh
+bin=`dirname "$0"`
+bin=`cd "$bin"; pwd`
+HADOOP_HOME_PATH=/usr/hdp/current/hadoop-client
+HADOOP_CONFIG_SCRIPT=$HADOOP_HOME_PATH/libexec/hadoop-config.sh
+HADOOP_CLIENT_LIBS=$HADOOP_HOME_PATH/client
+if [ -e $HADOOP_CONFIG_SCRIPT ] ; then 
+        .  $HADOOP_CONFIG_SCRIPT
+else
+        echo "Hadoop Client not Installed on Node"
+        exit 1
+fi
+if [ -e $JAVA_HOME/bin/java ] ; then
+        $JAVA_HOME/bin/java -cp "$bin/ftp2hdfs-0.1.jar:$bin/commons-net-3.3.jar:$HADOOP_CLIENT_LIBS/*" org.apache.hadoop.ftp.FTP2HDFSClient
+ "$@"
+else
+        echo "Java Defined for Hadoop Missing on Node"
+        exit 1
+fi
