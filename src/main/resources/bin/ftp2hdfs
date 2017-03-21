@@ -10,9 +10,12 @@ else
         echo "Hadoop Client not Installed on Node"
         exit 1
 fi
+
+FTP2HDFSJAR=`ls -1 $bin/lib/ftp2hdfs*.jar`
+COMMONSNETJAR=`ls -1 $bin/lib/commons-net*.jar`
+
 if [ -e $JAVA_HOME/bin/java ] ; then
-        $JAVA_HOME/bin/java -cp "$bin/ftp2hdfs-0.1.jar:$bin/commons-net-3.3.jar:$HADOOP_CLIENT_LIBS/*" org.apache.hadoop.ftp.FTP2HDFSClient
- "$@"
+        $JAVA_HOME/bin/java -cp "$FTP2HDFSJAR:$COMMONSNETJAR:$HADOOP_CLIENT_LIBS/*" org.apache.hadoop.ftp.FTP2HDFSClient "$@"
 else
         echo "Java Defined for Hadoop Missing on Node"
         exit 1

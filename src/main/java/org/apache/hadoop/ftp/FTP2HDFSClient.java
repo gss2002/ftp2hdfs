@@ -1,8 +1,5 @@
 package org.apache.hadoop.ftp;
 
-
-
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,13 +8,11 @@ import java.io.InputStream;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
  
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -53,17 +48,19 @@ public class FTP2HDFSClient {
     static String pwd = null;
     static String downloadFile = null;
 	static UserGroupInformation ugi = null;
+	static Options options = new Options();
+
 
 
     
     String ftpHost = null;
  
     public static void downloadFile0(String remoteFilePath, String hdfsPath) {
+        FileOutputStream fos;
 		try {
-			
+
 			InputStream in = null;
 
-            // APPROACH #2: using InputStream retrieveFileStream(String)
             String remoteFile = remoteFilePath;
             
 
@@ -73,9 +70,6 @@ public class FTP2HDFSClient {
                     return;
             }
 
-            // Create a new file and write data to it.
-         
-           // OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(downloadFile));
             FSDataOutputStream out = fileSystem.create(path);
 
             try {
@@ -83,11 +77,8 @@ public class FTP2HDFSClient {
                 int bytes_read = 0;
                 in = ftp.retrieveFileStream(remoteFile);
 
-    
-
                 do {
                     bytes_read = in.read(buf, 0, buf.length);
-                    //System.out.println("Just Read: " + bytes_read + " bytes");
 
                     if (bytes_read < 0) {
                         /* Handle EOF however you want */
@@ -141,18 +132,14 @@ public class FTP2HDFSClient {
 
  
  public static void downloadFile() {
+     UserGroupInformation.setConfiguration(conf);
 	 if (UserGroupInformation.isSecurityEnabled()) {
 	    try {
 	    	if (setKrb == true) {
-	            System.setProperty("sun.security.krb5.debug", "false");
-	            UserGroupInformation.setConfiguration(conf);
 	            ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(keytabupn, keytab);
-	            UserGroupInformation.setLoginUser(ugi);
 	    	} else {	    	
 	    		ugi = UserGroupInformation.getCurrentUser();
 	    	}
-	    	//ugi = UserGroupInformation.getBestUGI(ticketCachePath, user)
-	    	//UserGroupInformation.getUGIFromTicketCache("/tmp/krb5cc_0", args[1]));
 	    	System.out.println("UserId for Hadoop: "+ugi.getUserName());
 	    } catch (IOException e3) {
 	    	// TODO Auto-generated catch block
@@ -160,16 +147,15 @@ public class FTP2HDFSClient {
 	    	System.out.println("Exception Getting Credentials Exiting!");
 	    	System.exit(1);
 	    }
-	    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS);
-	    //ugi.setConfiguration(conf);
 
 	    getFS();	
       
         try {
         	System.out.println("HasCredentials: "+ugi.hasKerberosCredentials());
-        	System.out.println("ShortName: "+ugi.getShortUserName());
-        	System.out.println("RealUser: "+ugi.getRealUser());
+        	System.out.println("UserShortName: "+ugi.getShortUserName());
         	System.out.println("Login KeyTab Based: "+UserGroupInformation.isLoginKeytabBased());
+        	System.out.println("Login Ticket Based: "+UserGroupInformation.isLoginTicketBased());
+
 
 
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
@@ -181,9 +167,6 @@ public class FTP2HDFSClient {
                 }
             });
         
-            //ftpDownloader.downloadFile("\'GSS.RESOLVED.ENR.MNTH.M201406.G0001V00\'", "/user/username/data/");
-            //ftpDownloader.listFiles("\'GSS.RESOLVED.ENR.MNTH'");
-
         } catch (Exception e) {
         	e.printStackTrace();
         }
@@ -212,18 +195,18 @@ public class FTP2HDFSClient {
 			e4.printStackTrace();
 		}
 		
-	    Options options = new Options();
+	    options = new Options();
 	    options.addOption("ftp_host", true, "FTP Hostname --ftp_host (zhost.example.com)");
 	    options.addOption("transfer_type", true, "FTP TransferType --transfer_type requires (vb,fb,ascii,binary,zascii,zbinary)");
 	    options.addOption("transfer_type_opts", true, "FTP TransferType Options --transfer_type_opts FIXrecfm=80,LRECL=80,BLKSIZE=27920");
 	    options.addOption("ftp_folder", true, "FTP Server Folder --ftp_folder /foldername/ ");
-	    options.addOption("ftp_pds", true, "FTP Partitioned Data set Z/os Folder --ftp_pds GSS.RESOLVED.ENR.MNTH.M201209 ");
+	    options.addOption("ftp_pds", true, "FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
 	    options.addOption("ftp_userid", true, "FTP Userid --ftp_userid userid");
 	    options.addOption("ftp_pwd", true, "FTP Password --ftp_pwd password");
 	    options.addOption("hdfs_outdir", true, "HDFS Output Dir --hdfs_outdir");
-	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename DATA20011");
-	    options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/user.keytab");
-	    options.addOption("krb_upn", true, "Kerberos Princpial for Keytab to Connect to HDFS --krb_upn user@EXAMP.EXAMPLE.COM");
+	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename PAID2011");
+	    options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/S00000.keytab");
+	    options.addOption("krb_upn", true, "Kerberos Princpial for Keytab to Connect to HDFS --krb_upn S00000@EXAMP.EXAMPLE.COM");
 	    options.addOption("help", false, "Display help");
 	    CommandLineParser parser = new FTPParser();
 	    CommandLine cmd = null;
@@ -241,6 +224,8 @@ public class FTP2HDFSClient {
 	    		userId = cmd.getOptionValue("ftp_userid");
 	    		pwd = cmd.getOptionValue("ftp_pwd");
 	    	} else {
+	    		System.out.println("Missing FtpServer Credentials");
+				missingParams();
 	    		System.exit(0);
 	    	}
 	    	if (cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds")) {
@@ -288,10 +273,12 @@ public class FTP2HDFSClient {
 	    			} 		
 	    		} else {
 		    		System.out.println("Missing FTP Transfer Type");
+					missingParams();
 		    		System.exit(0);	    			
 	    		}
 	    	} else {
 	    		System.out.println("Missing FTP Folder or Partitioned Data Set");
+				missingParams();
 	    		System.exit(0);
 	    	}
 	    	if (cmd.hasOption("ftp_filename")) {
@@ -301,18 +288,12 @@ public class FTP2HDFSClient {
 		    	hdfsPath = cmd.getOptionValue("hdfs_outdir");
 		    }
 		    if (cmd.hasOption("help")) {
-				String header = "FTP to HDFS Client";
-			  	String footer = "\nPlease report issues at https://github.com/gss2002";	 	 
-		    	 HelpFormatter formatter = new HelpFormatter();
-		    	 formatter.printHelp("get", header, options, footer, true);
-		    	 System.exit(0);
+				missingParams();
+		    	System.exit(0);
 		    }
 	    } else {
-			String header = "FTP to HDFS Client";
-		  	String footer = "\nPlease report issues at https://github.com/gss2002";	 	
-	    	 HelpFormatter formatter = new HelpFormatter();
-	    	 formatter.printHelp("get", header, options, footer, true);
-	    	 System.exit(0);
+			missingParams();
+	    	System.exit(0);
 	    }
 
     	
@@ -325,13 +306,14 @@ public class FTP2HDFSClient {
 	    		
 	    		if (!(keytabFile.canRead())) { 
 		    		System.out.println("KeyTab  exists but cannot read it - exiting");
+					missingParams();
 		    		System.exit(1);
 	    		}
 	    	} else {
 	    		System.out.println("KeyTab doesn't exist  - exiting");
+				missingParams();
 	    		System.exit(1);
 	    	}
-           // System.setProperty("java.security.auth.login.config", "./client_jaas.conf");
 
 	    }
     	
@@ -387,6 +369,13 @@ public class FTP2HDFSClient {
 
     }
     
+	private static void missingParams() {		
+		String header = "FTP to HDFS Client";
+	  	String footer = "\nPlease report issues at http://github.com/gss2002";	 	 
+    	 HelpFormatter formatter = new HelpFormatter();
+    	 formatter.printHelp("get", header, options, footer, true);
+    	 System.exit(0);
+	}
 	
  
 }
