@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -22,6 +24,7 @@ public class ZCopyBookFTPClient {
     String fileName = null;
     String ftpTypeOpts = null;
 
+	private static final Log LOG = LogFactory.getLog(ZCopyBookFTPClient.class.getName());
 
 
 	 public ZCopyBookFTPClient(String ftphostIn, String userIdIn, String pwdIn,
@@ -40,7 +43,9 @@ public class ZCopyBookFTPClient {
 	        ftp = new FTPClient();
 	        FTPClientConfig config = new FTPClientConfig(FTPClientConfig.SYST_MVS);
 	        ftp.configure(config);
-	        ftp.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out)));
+	        if (LOG.isDebugEnabled()) {
+	        	ftp.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out)));
+	        }
 	        int reply;
 	        ftp.setBufferSize(1048576);
 	        ftp.setReceiveBufferSize(1048576);

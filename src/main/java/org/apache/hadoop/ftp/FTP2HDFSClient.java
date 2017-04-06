@@ -2,7 +2,6 @@ package org.apache.hadoop.ftp;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.PrivilegedExceptionAction;
@@ -56,7 +55,6 @@ public class FTP2HDFSClient {
     String ftpHost = null;
  
     public static void downloadFile0(String remoteFilePath, String hdfsPath) {
-        FileOutputStream fos;
 		try {
 
 			InputStream in = null;
