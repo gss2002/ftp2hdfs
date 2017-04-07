@@ -8,6 +8,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ftp.ZCopyBookFTPClient;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -20,10 +22,13 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 	private FTPClient ftp = null;
 	private InputStream in = null;
 	private static final Log LOG = LogFactory.getLog(FTP2HDFSOutputFormat.class.getName());
+    private Configuration conf;
+    private Path path;
+    private FileSystem fs;
 
     
 
-    public FTPByteRecordWriter(DataOutputStream out, Configuration confIn) {
+    public FTPByteRecordWriter(Path path, Configuration confIn) {
 		String pwd = confIn.get(Constants.FTP2HDFS_PASS);
 		LOG.info("FTP2HDFS_HOST: "+confIn.get(Constants.FTP2HDFS_HOST));
 		LOG.info("FTP2HDFS_TRANSFERTYPE: "+confIn.get(Constants.FTP2HDFS_TRANSFERTYPE));
@@ -38,7 +43,8 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        this.out = out;
+		this.conf = confIn;
+        this.path = path;
     }
 
     @Override
@@ -47,6 +53,13 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
             String remoteFile = key.toString();
             key=null;
             value = null;
+            
+            String parentPath = path.getParent().toString();
+            String fileString = parentPath+"/"+remoteFile.replaceAll("\'", "");
+            Path file = new Path(fileString);
+            this.fs = file.getFileSystem(conf);
+            this.out = fs.create(file,false);
+            
             LOG.info("FTP CLient Downloading" +remoteFile);
 
             try {
