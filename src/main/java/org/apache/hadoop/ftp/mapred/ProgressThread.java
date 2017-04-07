@@ -51,11 +51,11 @@ public class ProgressThread extends Thread {
   private int reportInterval;
 
   public static final String MAX_PROGRESS_PERIOD_KEY =
-      "sqoop.mapred.auto.progress.max";
+      "ftp2hdfs.mapred.auto.progress.max";
   public static final String SLEEP_INTERVAL_KEY =
-      "sqoop.mapred.auto.progress.sleep";
+      "ftp2hdfs.mapred.auto.progress.sleep";
   public static final String REPORT_INTERVAL_KEY =
-      "sqoop.mapred.auto.progress.report";
+      "ftp2hdfs.mapred.auto.progress.report";
 
   // Sleep for 10 seconds at a time.
   public static final int DEFAULT_SLEEP_INTERVAL = 10000;
