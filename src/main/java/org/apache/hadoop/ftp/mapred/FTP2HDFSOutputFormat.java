@@ -17,7 +17,7 @@ public class FTP2HDFSOutputFormat extends FileOutputFormat<Text, NullWritable> {
         String extension = "";
         Path file = getDefaultWorkFile(taskAttemptContext, extension);
 	
-        return new FTPByteRecordWriter(file, conf);
+        return new FTPByteRecordWriter(file, conf, taskAttemptContext);
     }
 
  

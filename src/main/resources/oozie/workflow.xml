@@ -1,0 +1,42 @@
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="java-main-wf">
+    <start to="java-node"/>
+    <action name="java-node">
+        <java>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <main-class>org.apache.hadoop.ftp.mapred.FTP2HDFSDriver</main-class>
+            <arg>get</arg>
+            <arg>-ftp_host</arg>
+            <arg>zosftp.example.com</arg>
+            <arg>-hdfs_outdir</arg>
+            <arg>/user/username/data_set</arg>
+            <arg>-ftp_pds</arg>
+            <arg>ZOS.PDS</arg>
+            <arg>-ftp_filename</arg>
+            <arg>DATA</arg>
+            <arg>-ftp_transfer_limit</arg>
+            <arg>2</arg>
+            <arg>-transfer_type</arg>
+            <arg>fb</arg>
+            <arg>-ftp_userid</arg>
+            <arg>testedm</arg>
+            <arg>-ftp_pwd_alias</arg>
+            <arg>ftptest</arg>
+            <arg>-ftp_hadoop_cred_path</arg>
+            <arg>jceks://hdfs/user/username/ftp2hdfs.password.jceks</arg>
+            
+        </java>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>Java failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

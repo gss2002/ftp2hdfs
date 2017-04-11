@@ -8,6 +8,8 @@ public class Constants
       = "ftp2hdfs.userid";
   public static final String FTP2HDFS_PASS
 		= "ftp2hdfs.password";
+  public static final String FTP2HDFS_PASS_ALIAS
+		= "ftp2hdfs.password.alias";
   public static final String FTP2HDFS_TRANSFERTYPE
 	= "ftp2hdfs.transfer.type";
   public static final String FTP2HDFS_FILENAME

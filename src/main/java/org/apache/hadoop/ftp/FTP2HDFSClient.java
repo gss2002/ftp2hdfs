@@ -45,6 +45,8 @@ public class FTP2HDFSClient {
     static String ftphost = null;
     static String userId = null;
     static String pwd = null;
+	static String pwdAlias = null;
+	static String pwdCredPath = null;
     static String downloadFile = null;
 	static UserGroupInformation ugi = null;
 	static Options options = new Options();
@@ -201,6 +203,8 @@ public class FTP2HDFSClient {
 	    options.addOption("ftp_pds", true, "FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
 	    options.addOption("ftp_userid", true, "FTP Userid --ftp_userid userid");
 	    options.addOption("ftp_pwd", true, "FTP Password --ftp_pwd password");
+	    options.addOption("ftp_pwd_alias", true, "FTP Password Alias --ftp_pwd_alias password.alias");
+	    options.addOption("ftp_hadoop_cred_path", true, "FTP Password --ftp_hadoop_cred_path /user/username/credstore.jceks");
 	    options.addOption("hdfs_outdir", true, "HDFS Output Dir --hdfs_outdir");
 	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename PAID2011");
 	    options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/S00000.keytab");
@@ -216,16 +220,20 @@ public class FTP2HDFSClient {
 		}
 	    
 	    
-	    if (cmd.hasOption("ftp_host") && cmd.hasOption("hdfs_outdir") && cmd.hasOption("ftp_filename") && cmd.hasOption("ftp_userid") && cmd.hasOption("ftp_pwd") && cmd.hasOption("transfer_type")) {
-	    	ftphost = cmd.getOptionValue("ftp_host");
-	    	if (cmd.hasOption("ftp_userid") && cmd.hasOption("ftp_pwd")) {
-	    		userId = cmd.getOptionValue("ftp_userid");
-	    		pwd = cmd.getOptionValue("ftp_pwd");
-	    	} else {
-	    		System.out.println("Missing FtpServer Credentials");
-				missingParams();
+    	if (cmd.hasOption("ftp_userid") && (cmd.hasOption("ftp_pwd") || (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")))) {
+    		userId = cmd.getOptionValue("ftp_userid");
+    		if (cmd.hasOption("ftp_pwd")) {
+    			pwd = cmd.getOptionValue("ftp_pwd");
+    		} else if (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")) {
+    			pwdAlias = cmd.getOptionValue("ftp_pwd_alias");
+    			pwdCredPath = cmd.getOptionValue("ftp_hadoop_cred_path");
+
+    		} else {
+	    		System.out.println("Missing FTP Password / FTP Password Alias / FTP Hadoop Cred Path");
+	    		missingParams();
 	    		System.exit(0);
-	    	}
+    		}
+    	
 	    	if (cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds")) {
 	    		if (cmd.hasOption("transfer_type")) {
 	    			fileType = cmd.getOptionValue("transfer_type");
@@ -290,7 +298,9 @@ public class FTP2HDFSClient {
 		    	System.exit(0);
 		    }
 	    } else {
+    		System.out.println("Missing FTP Host / HDFS OutDir / FTP FileName / Transfter Type");
 			missingParams();
+ 
 	    	System.exit(0);
 	    }
 

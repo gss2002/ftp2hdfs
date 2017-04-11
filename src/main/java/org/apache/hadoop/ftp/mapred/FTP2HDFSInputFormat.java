@@ -10,6 +10,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ftp.ZCopyBookFTPClient;
+import org.apache.hadoop.ftp.password.FTP2HDFSCredentialProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -41,7 +42,12 @@ public class FTP2HDFSInputFormat extends FileInputFormat<Text, NullWritable> {
 		ftppds = conf.get(Constants.FTP2HDFS_PDS);
 		String fileName = null;
 		String pwd = conf.get(Constants.FTP2HDFS_PASS);
-
+		String pwdAlias = conf.get(Constants.FTP2HDFS_PASS_ALIAS);
+		if (pwdAlias != null) {
+			FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
+			pwd = new String(creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"), conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf));
+		}
+		
 		if ((zftp) && (zpds)) {
 			ftpDownloader = new ZCopyBookFTPClient(conf.get(Constants.FTP2HDFS_HOST),
 					conf.get(Constants.FTP2HDFS_USERID), pwd,

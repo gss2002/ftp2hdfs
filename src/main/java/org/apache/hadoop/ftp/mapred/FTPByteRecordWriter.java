@@ -11,6 +11,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ftp.ZCopyBookFTPClient;
+import org.apache.hadoop.ftp.password.FTP2HDFSCredentialProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -28,8 +29,16 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 
     
 
-    public FTPByteRecordWriter(Path path, Configuration confIn) {
+    public FTPByteRecordWriter(Path path, Configuration confIn, TaskAttemptContext taskAttemptContext) {
 		String pwd = confIn.get(Constants.FTP2HDFS_PASS);
+		String pwdAlias = confIn.get(Constants.FTP2HDFS_PASS_ALIAS);
+		if (pwdAlias != null) {
+			LOG.info("Cred Provider: "+confIn.get("hadoop.security.credential.provider.path"));
+			LOG.info("Cred Alias: "+confIn.get(Constants.FTP2HDFS_PASS_ALIAS));
+
+			FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
+			pwd = new String(creds.getCredentialString(confIn.get("hadoop.security.credential.provider.path"), confIn.get(Constants.FTP2HDFS_PASS_ALIAS), confIn));
+		}
 		LOG.info("FTP2HDFS_HOST: "+confIn.get(Constants.FTP2HDFS_HOST));
 		LOG.info("FTP2HDFS_TRANSFERTYPE: "+confIn.get(Constants.FTP2HDFS_TRANSFERTYPE));
 		LOG.info("FTP2HDFS_TRANSFERTYPE_OPTS: "+confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));

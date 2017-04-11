@@ -14,6 +14,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ftp.FTPParser;
 import org.apache.hadoop.ftp.ZCopyBookFTPClient;
+import org.apache.hadoop.ftp.password.FTP2HDFSCredentialProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -46,6 +47,8 @@ public class FTP2HDFSDriver {
 	static String ftphost = null;
 	static String userId = null;
 	static String pwd = null;
+    static String pwdAlias = null;
+	static String pwdCredPath = null;
 	static String downloadFile = null;
 	static String ftpTransferLimit = null; 
 	static UserGroupInformation ugi = null;
@@ -88,13 +91,23 @@ public class FTP2HDFSDriver {
 		}
 	    
 	    
-	    if (cmd.hasOption("ftp_host") && cmd.hasOption("hdfs_outdir") && cmd.hasOption("ftp_filename") && cmd.hasOption("ftp_userid") && cmd.hasOption("ftp_pwd") && cmd.hasOption("transfer_type")) {
+	    if (cmd.hasOption("ftp_host") && cmd.hasOption("hdfs_outdir") && cmd.hasOption("ftp_filename")  && cmd.hasOption("transfer_type")) {
 	    	ftphost = cmd.getOptionValue("ftp_host");
-	    	if (cmd.hasOption("ftp_userid") && cmd.hasOption("ftp_pwd")) {
+	    	if (cmd.hasOption("ftp_userid") && (cmd.hasOption("ftp_pwd") || (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")))) {
 	    		userId = cmd.getOptionValue("ftp_userid");
-	    		pwd = cmd.getOptionValue("ftp_pwd");
+	    		if (cmd.hasOption("ftp_pwd")) {
+	    			pwd = cmd.getOptionValue("ftp_pwd");
+	    		} else if (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")) {
+	    			pwdAlias = cmd.getOptionValue("ftp_pwd_alias");
+	    			pwdCredPath = cmd.getOptionValue("ftp_hadoop_cred_path");
+
+	    		} else {
+		    		System.out.println("Missing FTP Password / FTP Password Alias / FTP Hadoop Cred Path");
+		    		missingParams();
+		    		System.exit(0);
+	    		}
 	    	} else {
-	    		System.out.println("Missing FtpServer Credentials");
+	    		System.out.println("Missing FTP Host / HDFS OutDir / FTP FileName / Transfter Type");
 				missingParams();
 	    		System.exit(0);
 	    	}
@@ -217,6 +230,20 @@ public class FTP2HDFSDriver {
 		conf.setBoolean(Constants.FTP2HDFS_ZPDS, zpds);
 		conf.setBoolean(Constants.FTP2HDFS_ZFTP, zftp);
 		conf.set("mapreduce.map.java.opts", "-Xmx5120m");
+		if (pwdCredPath != null && pwdAlias != null) {
+			String pwdCredPathHdfs =pwdCredPath;
+			conf.set("hadoop.security.credential.provider.path", pwdCredPathHdfs);
+			conf.set(Constants.FTP2HDFS_PASS_ALIAS, pwdAlias);
+			String pwdAlias = conf.get(Constants.FTP2HDFS_PASS_ALIAS);
+			if (pwdAlias != null) {
+				FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
+				char[] pwdChars = creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"), conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf);
+				if (pwdChars == null) {
+					System.out.println("Invalid URI for Password Alias or CredPath");
+					System.exit(1);
+				}
+			}
+		}
 
 
 		
