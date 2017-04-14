@@ -15,6 +15,6 @@ fi
 FTP2HDFSJAR=`ls -1 $binDir/lib/ftp2hdfs*.jar`
 COMMONSNETJAR=`ls -1 $binDir/lib/commons-net*.jar`
 
-hadoop fs -mkdir -p /apps/copybook2tsv
+hadoop fs -mkdir -p /apps/ftp2hdfs
 hadoop fs -copyFromLocal -f $FTP2HDFSJAR /apps/ftp2hdfs/ftp2hdfs.jar
 hadoop fs -copyFromLocal -f $COMMONSNETJAR /apps/ftp2hdfs/commons-net.jar
