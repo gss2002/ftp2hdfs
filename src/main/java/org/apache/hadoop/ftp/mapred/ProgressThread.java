@@ -1,5 +1,3 @@
-package org.apache.hadoop.ftp.mapred;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.hadoop.ftp.mapred;
  * limitations under the License.
  */
 
+package org.apache.hadoop.ftp.mapred;
 
 import org.apache.commons.logging.Log;
 import org.apache.hadoop.conf.Configuration;
