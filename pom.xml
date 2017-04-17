@@ -21,6 +21,10 @@
 	<properties>
 		<app.home>/apps/ftp2hdfs/</app.home>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<install.user>root</install.user>
+		<java.version>1.8</java.version>
+		<hadoop.version>2.7.1</hadoop.version>
+		<commons.net.version>3.3</commons.net.version>
 	</properties>
 
 	<profiles>
@@ -87,8 +91,8 @@
 								<mapping>
 									<directory>${app.home}</directory>
 									<filemode>755</filemode>
-									<username>root</username>
-									<groupname>root</groupname>
+									<username>${install.user}</username>
+									<groupname>${install.user}</groupname>
 									<sources>
 										<source>
 											<location>${project.basedir}/src/main/resources/bin/ftp2hdfs</location>
@@ -99,8 +103,8 @@
 									<directory>${app.home}</directory>
 									<directoryIncluded>true</directoryIncluded>
 									<filemode>755</filemode>
-									<username>root</username>
-									<groupname>root</groupname>
+									<username>${install.user}</username>
+									<groupname>${install.user}</groupname>
 									<sources>
 										<source>
 											<location>${project.basedir}/src/main/resources/bin/</location>
@@ -111,8 +115,8 @@
 									<directory>${app.home}/oozie</directory>
 									<directoryIncluded>true</directoryIncluded>
 									<filemode>755</filemode>
-									<username>root</username>
-									<groupname>root</groupname>
+									<username>${install.user}</username>
+									<groupname>${install.user}</groupname>
 									<sources>
 										<source>
 											<location>${project.basedir}/src/main/resources/oozie/</location>
@@ -135,8 +139,8 @@
 				<version>2.3.2</version>
 				<configuration>
 					<fork>true</fork>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -155,12 +159,12 @@
 		<dependency>
 			<groupId>commons-net</groupId>
 			<artifactId>commons-net</artifactId>
-			<version>3.3</version>
+			<version>${commons.net.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>2.7.1</version>
+			<version>${hadoop.version}</version>
 		</dependency>
 	</dependencies>
 </project>
