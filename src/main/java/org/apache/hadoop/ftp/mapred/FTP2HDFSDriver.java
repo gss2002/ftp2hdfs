@@ -45,7 +45,7 @@ public class FTP2HDFSDriver {
 	static FTPClient ftp = null;
 	static boolean zftp = false;
 	static boolean zpds = false;
-	static boolean ftpTransferLimitTrue = false; 
+	static boolean ftpTransferLimitTrue = false;
 	static boolean setKrb = false;
 	static String ftptype = "binary";
 	static String ftptypeopts = null;
@@ -65,197 +65,201 @@ public class FTP2HDFSDriver {
 	static String ftphost = null;
 	static String userId = null;
 	static String pwd = null;
-    static String pwdAlias = null;
+	static String pwdAlias = null;
 	static String pwdCredPath = null;
 	static String downloadFile = null;
-	static String ftpTransferLimit = null; 
+	static String ftpTransferLimit = null;
 	static UserGroupInformation ugi = null;
 	static Options options = new Options();
 	String ftpHost = null;
 
 	public static void main(String[] args) throws Exception {
-    	
-    	
-    	Configuration conf = new Configuration();
-	    String[] otherArgs = null;
+
+		Configuration conf = new Configuration();
+		String[] otherArgs = null;
 		try {
 			otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		} catch (IOException e4) {
 			// TODO Auto-generated catch block
 			e4.printStackTrace();
 		}
-		
-	    options = new Options();
-	    options.addOption("ftp_host", true, "FTP Hostname --ftp_host (zhost.example.com)");
-	    options.addOption("transfer_type", true, "FTP TransferType --transfer_type requires (vb,fb,ascii,binary,zascii,zbinary)");
-	    options.addOption("transfer_type_opts", true, "FTP TransferType Options --transfer_type_opts FIXrecfm=80,LRECL=80,BLKSIZE=27920");
-	    options.addOption("ftp_folder", true, "FTP Server Folder --ftp_folder /foldername/ ");
-	    options.addOption("ftp_pds", true, "FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
-	    options.addOption("ftp_userid", true, "FTP Userid --ftp_userid userid");
-	    options.addOption("ftp_pwd", true, "FTP Password --ftp_pwd password");
-	    options.addOption("ftp_transfer_limit", true, "FTP Client # of transfers to execute simultaneously should not transfer Note: 2-4 = optimal"); 
-	    options.addOption("hdfs_outdir", true, "HDFS Output Dir --hdfs_outdir");
-	    options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename PAID2011");
-	    options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/S00000.keytab");
-	    options.addOption("krb_upn", true, "Kerberos Princpial for Keytab to Connect to HDFS --krb_upn S00000@EXAMP.EXAMPLE.COM");
-	    options.addOption("help", false, "Display help");
-	    CommandLineParser parser = new FTPParser();
-	    CommandLine cmd = null;
+
+		options = new Options();
+		options.addOption("ftp_host", true, "FTP Hostname --ftp_host (zhost.example.com)");
+		options.addOption("transfer_type", true,
+				"FTP TransferType --transfer_type requires (vb,fb,ascii,binary,zascii,zbinary)");
+		options.addOption("transfer_type_opts", true,
+				"FTP TransferType Options --transfer_type_opts FIXrecfm=80,LRECL=80,BLKSIZE=27920");
+		options.addOption("ftp_folder", true, "FTP Server Folder --ftp_folder /foldername/ ");
+		options.addOption("ftp_pds", true,
+				"FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
+		options.addOption("ftp_userid", true, "FTP Userid --ftp_userid userid");
+		options.addOption("ftp_pwd", true, "FTP Password --ftp_pwd password");
+		options.addOption("ftp_transfer_limit", true,
+				"FTP Client # of transfers to execute simultaneously should not transfer Note: 2-4 = optimal");
+		options.addOption("hdfs_outdir", true, "HDFS Output Dir --hdfs_outdir");
+		options.addOption("ftp_filename", true, "FTPFileName --filename G* or --filename PAID2011");
+		options.addOption("krb_keytab", true, "KeyTab File to Connect to HDFS --krb_keytab $HOME/S00000.keytab");
+		options.addOption("krb_upn", true,
+				"Kerberos Princpial for Keytab to Connect to HDFS --krb_upn S00000@EXAMP.EXAMPLE.COM");
+		options.addOption("help", false, "Display help");
+		CommandLineParser parser = new FTPParser();
+		CommandLine cmd = null;
 		try {
-			cmd = parser.parse( options, otherArgs);
+			cmd = parser.parse(options, otherArgs);
 		} catch (ParseException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
-	    
-	    
-	    if (cmd.hasOption("ftp_host") && cmd.hasOption("hdfs_outdir") && cmd.hasOption("ftp_filename")  && cmd.hasOption("transfer_type")) {
-	    	ftphost = cmd.getOptionValue("ftp_host");
-	    	if (cmd.hasOption("ftp_userid") && (cmd.hasOption("ftp_pwd") || (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")))) {
-	    		userId = cmd.getOptionValue("ftp_userid");
-	    		if (cmd.hasOption("ftp_pwd")) {
-	    			pwd = cmd.getOptionValue("ftp_pwd");
-	    		} else if (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")) {
-	    			pwdAlias = cmd.getOptionValue("ftp_pwd_alias");
-	    			pwdCredPath = cmd.getOptionValue("ftp_hadoop_cred_path");
 
-	    		} else {
-		    		System.out.println("Missing FTP Password / FTP Password Alias / FTP Hadoop Cred Path");
-		    		missingParams();
-		    		System.exit(0);
-	    		}
-	    	} else {
-	    		System.out.println("Missing FTP Host / HDFS OutDir / FTP FileName / Transfter Type");
-				missingParams();
-	    		System.exit(0);
-	    	}
-	    	if (cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds")) {
-	    		if (cmd.hasOption("transfer_type")) {
-	    			fileType = cmd.getOptionValue("transfer_type");
-	    			System.out.println("fileType: "+fileType);
-	    			if (cmd.hasOption("ftp_pds") && (fileType.equalsIgnoreCase("vb") || fileType.equalsIgnoreCase("fb")))  {
-	    				zftp=true;
-	    				zpds=true;
-	    				ftptype="binary";
-	    				ftppds=cmd.getOptionValue("ftp_pds");
-	    				if (cmd.hasOption("transfer_type_opts")) {
-	    					ftptypeopts = cmd.getOptionValue("transfer_type_opts");
-	    				}
-	    			}
-	    			if (((cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds")) && (fileType.equalsIgnoreCase("zascii") || fileType.equalsIgnoreCase("zbinary"))))  {
-	    				zftp=true;
-	    				if (fileType.equalsIgnoreCase("zascii")) {
-		    				zftp=true;
-	    					ftptype="zascii";
-	    				}
-	    				if (fileType.equalsIgnoreCase("zbinary")) {
-		    				zftp=true;
-	    					ftptype="zbinary";
-	    				}
-	    				if (cmd.hasOption("ftp_pds"))
-	    				{
-		    				zpds=true;
-		    				ftppds=cmd.getOptionValue("ftp_pds");
-	    				}
-	    				if (cmd.hasOption("ftp_folder")) {
-	    					ftpfolder=cmd.getOptionValue("ftp_folder");
-	    				}
-	    			}
-	    			if (fileType.equalsIgnoreCase("ascii") || fileType.equalsIgnoreCase("binary" )) 
-	    			{
-	    				zftp=false;
-	    				ftpfolder=cmd.getOptionValue("ftp_folder");
-	    				if (fileType.equalsIgnoreCase("ascii")) {
-	    					ftptype="ascii";
-	    				}
-	    				if (fileType.equalsIgnoreCase("binary")) {
-	    					ftptype="binary";
-	    				}
-	    			} 		
-	    		} else {
-		    		System.out.println("Missing FTP Transfer Type");
+		if (cmd.hasOption("ftp_host") && cmd.hasOption("hdfs_outdir") && cmd.hasOption("ftp_filename")
+				&& cmd.hasOption("transfer_type")) {
+			ftphost = cmd.getOptionValue("ftp_host");
+			if (cmd.hasOption("ftp_userid") && (cmd.hasOption("ftp_pwd")
+					|| (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")))) {
+				userId = cmd.getOptionValue("ftp_userid");
+				if (cmd.hasOption("ftp_pwd")) {
+					pwd = cmd.getOptionValue("ftp_pwd");
+				} else if (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")) {
+					pwdAlias = cmd.getOptionValue("ftp_pwd_alias");
+					pwdCredPath = cmd.getOptionValue("ftp_hadoop_cred_path");
+
+				} else {
+					System.out.println("Missing FTP Password / FTP Password Alias / FTP Hadoop Cred Path");
 					missingParams();
-		    		System.exit(0);	    			
-	    		}
-	    	} else {
-	    		System.out.println("Missing FTP Folder or Partitioned Data Set");
+					System.exit(0);
+				}
+			} else {
+				System.out.println("Missing FTP Host / HDFS OutDir / FTP FileName / Transfter Type");
 				missingParams();
-	    		System.exit(0);
-	    	}
-	    	if (cmd.hasOption("ftp_filename")) {
-	    		ftpFileName = cmd.getOptionValue("ftp_filename");
-	    	} 
-	    	if (cmd.hasOption("ftp_transfer_limit")) { 
-	    		ftpTransferLimitTrue=true; 
-	    		ftpTransferLimit = cmd.getOptionValue("ftp_transfer_limit"); 
-	    	} 
-		    if (cmd.hasOption("hdfs_outdir")) {
-		    	hdfsPath = cmd.getOptionValue("hdfs_outdir");
-		    }
-		    if (cmd.hasOption("help")) {
+				System.exit(0);
+			}
+			if (cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds")) {
+				if (cmd.hasOption("transfer_type")) {
+					fileType = cmd.getOptionValue("transfer_type");
+					System.out.println("fileType: " + fileType);
+					if (cmd.hasOption("ftp_pds")
+							&& (fileType.equalsIgnoreCase("vb") || fileType.equalsIgnoreCase("fb"))) {
+						zftp = true;
+						zpds = true;
+						ftptype = "binary";
+						ftppds = cmd.getOptionValue("ftp_pds");
+						if (cmd.hasOption("transfer_type_opts")) {
+							ftptypeopts = cmd.getOptionValue("transfer_type_opts");
+						}
+					}
+					if (((cmd.hasOption("ftp_folder") || cmd.hasOption("ftp_pds"))
+							&& (fileType.equalsIgnoreCase("zascii") || fileType.equalsIgnoreCase("zbinary")))) {
+						zftp = true;
+						if (fileType.equalsIgnoreCase("zascii")) {
+							zftp = true;
+							ftptype = "zascii";
+						}
+						if (fileType.equalsIgnoreCase("zbinary")) {
+							zftp = true;
+							ftptype = "zbinary";
+						}
+						if (cmd.hasOption("ftp_pds")) {
+							zpds = true;
+							ftppds = cmd.getOptionValue("ftp_pds");
+						}
+						if (cmd.hasOption("ftp_folder")) {
+							ftpfolder = cmd.getOptionValue("ftp_folder");
+						}
+					}
+					if (fileType.equalsIgnoreCase("ascii") || fileType.equalsIgnoreCase("binary")) {
+						zftp = false;
+						ftpfolder = cmd.getOptionValue("ftp_folder");
+						if (fileType.equalsIgnoreCase("ascii")) {
+							ftptype = "ascii";
+						}
+						if (fileType.equalsIgnoreCase("binary")) {
+							ftptype = "binary";
+						}
+					}
+				} else {
+					System.out.println("Missing FTP Transfer Type");
+					missingParams();
+					System.exit(0);
+				}
+			} else {
+				System.out.println("Missing FTP Folder or Partitioned Data Set");
 				missingParams();
-		    	System.exit(0);
-		    }
-	    } else {
+				System.exit(0);
+			}
+			if (cmd.hasOption("ftp_filename")) {
+				ftpFileName = cmd.getOptionValue("ftp_filename");
+			}
+			if (cmd.hasOption("ftp_transfer_limit")) {
+				ftpTransferLimitTrue = true;
+				ftpTransferLimit = cmd.getOptionValue("ftp_transfer_limit");
+			}
+			if (cmd.hasOption("hdfs_outdir")) {
+				hdfsPath = cmd.getOptionValue("hdfs_outdir");
+			}
+			if (cmd.hasOption("help")) {
+				missingParams();
+				System.exit(0);
+			}
+		} else {
 			missingParams();
-	    	System.exit(0);
-	    }
+			System.exit(0);
+		}
 
-    	
-	    if (cmd.hasOption("krb_keytab") && cmd.hasOption("krb_upn")) {
-	    	setKrb=true;
-	    	keytab = cmd.getOptionValue("krb_keytab");
-	    	keytabupn = cmd.getOptionValue("krb_upn");
-	    	File keytabFile = new File(keytab);
-	    	if (keytabFile.exists()) {
-	    		
-	    		if (!(keytabFile.canRead())) { 
-		    		System.out.println("KeyTab  exists but cannot read it - exiting");
+		if (cmd.hasOption("krb_keytab") && cmd.hasOption("krb_upn")) {
+			setKrb = true;
+			keytab = cmd.getOptionValue("krb_keytab");
+			keytabupn = cmd.getOptionValue("krb_upn");
+			File keytabFile = new File(keytab);
+			if (keytabFile.exists()) {
+
+				if (!(keytabFile.canRead())) {
+					System.out.println("KeyTab  exists but cannot read it - exiting");
 					missingParams();
-		    		System.exit(1);
-	    		}
-	    	} else {
-	    		System.out.println("KeyTab doesn't exist  - exiting");
+					System.exit(1);
+				}
+			} else {
+				System.out.println("KeyTab doesn't exist  - exiting");
 				missingParams();
-	    		System.exit(1);
-	    	}
+				System.exit(1);
+			}
+		}
 
-	    }
-    	
 		if (System.getProperty("oozie.action.conf.xml") != null) {
 			conf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
 		}
 		conf.set(Constants.FTP2HDFS_HOST, ftphost);
 		conf.set(Constants.FTP2HDFS_USERID, userId);
 		if (pwd != null) {
-		conf.set(Constants.FTP2HDFS_PASS, pwd);
+			conf.set(Constants.FTP2HDFS_PASS, pwd);
 		}
-		if (fileType != null){
-		conf.set(Constants.FTP2HDFS_TRANSFERTYPE, fileType);
+		if (fileType != null) {
+			conf.set(Constants.FTP2HDFS_TRANSFERTYPE, fileType);
 		}
-		if ( ftptypeopts != null) {
-		conf.set(Constants.FTP2HDFS_TRANSFERTYPE_OPTS, ftptypeopts);
+		if (ftptypeopts != null) {
+			conf.set(Constants.FTP2HDFS_TRANSFERTYPE_OPTS, ftptypeopts);
 		}
 		if (ftppds != null) {
-		conf.set(Constants.FTP2HDFS_PDS, ftppds);
+			conf.set(Constants.FTP2HDFS_PDS, ftppds);
 		}
 		if (ftpFileName != null) {
-		conf.set(Constants.FTP2HDFS_FILENAME, ftpFileName);
+			conf.set(Constants.FTP2HDFS_FILENAME, ftpFileName);
 		}
 		if (ftpfolder != null) {
-		conf.set(Constants.FTP2HDFS_FOLDER, ftpfolder);	
+			conf.set(Constants.FTP2HDFS_FOLDER, ftpfolder);
 		}
 		conf.setBoolean(Constants.FTP2HDFS_ZPDS, zpds);
 		conf.setBoolean(Constants.FTP2HDFS_ZFTP, zftp);
 		conf.set("mapreduce.map.java.opts", "-Xmx5120m");
 		if (pwdCredPath != null && pwdAlias != null) {
-			String pwdCredPathHdfs =pwdCredPath;
+			String pwdCredPathHdfs = pwdCredPath;
 			conf.set("hadoop.security.credential.provider.path", pwdCredPathHdfs);
 			conf.set(Constants.FTP2HDFS_PASS_ALIAS, pwdAlias);
 			String pwdAlias = conf.get(Constants.FTP2HDFS_PASS_ALIAS);
 			if (pwdAlias != null) {
 				FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
-				char[] pwdChars = creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"), conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf);
+				char[] pwdChars = creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"),
+						conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf);
 				if (pwdChars == null) {
 					System.out.println("Invalid URI for Password Alias or CredPath");
 					System.exit(1);
@@ -263,12 +267,11 @@ public class FTP2HDFSDriver {
 			}
 		}
 
-
-		
 		// propagate delegation related props from launcher job to MR job
 		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			System.out.println("HADOOP_TOKEN_FILE_LOCATION is NOT NULL: "+ System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-		    conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+			System.out
+					.println("HADOOP_TOKEN_FILE_LOCATION is NOT NULL: " + System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 		}
 
 		String jobname = null;
@@ -277,14 +280,14 @@ public class FTP2HDFSDriver {
 		} else {
 			jobname = ftphost;
 		}
-		if (ftppds != null){
+		if (ftppds != null) {
 			jobname = ftphost + "_" + ftppds.replaceAll("\'", "");
 		} else {
 			jobname = ftphost;
 		}
-		if (ftpTransferLimitTrue) { 
-			conf.set("mapreduce.job.running.map.limit", ftpTransferLimit); 
-		} 
+		if (ftpTransferLimitTrue) {
+			conf.set("mapreduce.job.running.map.limit", ftpTransferLimit);
+		}
 
 		@SuppressWarnings("deprecation")
 		Job job = new Job(conf, "FTP2HDFS-" + jobname);
@@ -301,7 +304,6 @@ public class FTP2HDFSDriver {
 
 		job.waitForCompletion(true);
 	}
-
 
 	private static void missingParams() {
 		String header = "FTP to HDFS Client";

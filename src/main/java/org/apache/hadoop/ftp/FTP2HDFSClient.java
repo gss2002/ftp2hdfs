@@ -38,8 +38,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
 
- 
- 
 public class FTP2HDFSClient {
     static FTPClient ftp = null;
     static boolean zftp = false;
@@ -69,9 +67,6 @@ public class FTP2HDFSClient {
 	static UserGroupInformation ugi = null;
 	static Options options = new Options();
 
-
-
-    
     String ftpHost = null;
  
     public static void downloadFile0(String remoteFilePath, String hdfsPath) {
@@ -81,7 +76,6 @@ public class FTP2HDFSClient {
 
             String remoteFile = remoteFilePath;
             
-
             Path path = new Path(hdfsPath);
             if (fileSystem.exists(path)) {
                     System.out.println("File " + hdfsPath + " already exists");
@@ -108,7 +102,6 @@ public class FTP2HDFSClient {
 
                 } while (bytes_read >= 0);
 
-
             } catch (IOException e) {
                 e.printStackTrace(System.err);
             }
@@ -118,13 +111,6 @@ public class FTP2HDFSClient {
             if (success) {
                 System.out.println("File #2 has been downloaded successfully.");
             }
-
- 
-			
-			
-			
-			
-
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -132,9 +118,7 @@ public class FTP2HDFSClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-   
     }
- 
  
     public void disconnect() {
         if (this.ftp.isConnected()) {
@@ -147,8 +131,6 @@ public class FTP2HDFSClient {
         }
     }
     
-
- 
  public static void downloadFile() {
      UserGroupInformation.setConfiguration(conf);
 	 if (UserGroupInformation.isSecurityEnabled()) {
@@ -174,38 +156,28 @@ public class FTP2HDFSClient {
         	System.out.println("Login KeyTab Based: "+UserGroupInformation.isLoginKeytabBased());
         	System.out.println("Login Ticket Based: "+UserGroupInformation.isLoginTicketBased());
 
-
-
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
-
                 public Void run() throws Exception {
                 	System.out.println("Downloading: "+downloadFile+ " to HDFS: "+hdfsPath+"/"+downloadFile.replaceAll("\'", ""));
                 	downloadFile0(downloadFile, hdfsPath+"/"+downloadFile.replaceAll("\'", ""));
                     return null;
                 }
             });
-        
         } catch (Exception e) {
         	e.printStackTrace();
         }
 	 } else {
 		 getFS();
      	 System.out.println("Downloading: "+downloadFile+ " to HDFS: "+hdfsPath+"/"+downloadFile.replaceAll("\'", ""));
-     	 downloadFile0(downloadFile, hdfsPath+"/"+downloadFile.replaceAll("\'", ""));
-		 
-	 }
-        
+     	 downloadFile0(downloadFile, hdfsPath+"/"+downloadFile.replaceAll("\'", "")); 
+	 }        
 	}
 
-  
- 
- 
     public static void main(String[] args) {
-    	ArrayList<String> ftpFileLst = new ArrayList<String>();
-    	
-    	
+    	ArrayList<String> ftpFileLst = new ArrayList<String>(); 	
     	Configuration conf = new Configuration();
 	    String[] otherArgs = null;
+	    
 		try {
 			otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		} catch (IOException e4) {
@@ -236,8 +208,7 @@ public class FTP2HDFSClient {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
-	    
-	    
+	   
     	if (cmd.hasOption("ftp_userid") && (cmd.hasOption("ftp_pwd") || (cmd.hasOption("ftp_pwd_alias") && cmd.hasOption("ftp_hadoop_cred_path")))) {
     		userId = cmd.getOptionValue("ftp_userid");
     		if (cmd.hasOption("ftp_pwd")) {
@@ -318,18 +289,15 @@ public class FTP2HDFSClient {
 	    } else {
     		System.out.println("Missing FTP Host / HDFS OutDir / FTP FileName / Transfter Type");
 			missingParams();
- 
 	    	System.exit(0);
 	    }
-
     	
 	    if (cmd.hasOption("krb_keytab") && cmd.hasOption("krb_upn")) {
 	    	setKrb=true;
 	    	keytab = cmd.getOptionValue("krb_keytab");
 	    	keytabupn = cmd.getOptionValue("krb_upn");
 	    	File keytabFile = new File(keytab);
-	    	if (keytabFile.exists()) {
-	    		
+	    	if (keytabFile.exists()) {	
 	    		if (!(keytabFile.canRead())) { 
 		    		System.out.println("KeyTab  exists but cannot read it - exiting");
 					missingParams();
@@ -340,7 +308,6 @@ public class FTP2HDFSClient {
 				missingParams();
 	    		System.exit(1);
 	    	}
-
 	    }
     	
     	setConfig();
@@ -361,8 +328,7 @@ public class FTP2HDFSClient {
 			}
 		} catch (Exception e) {
            	e.printStackTrace();
-        }
-            
+        }            
 
         System.out.println("FTP File downloaded successfully");
         try {
@@ -371,12 +337,7 @@ public class FTP2HDFSClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
     }
-    
-    
-    
-    
     
     public static void setConfig(){
     	conf = new Configuration();
@@ -392,7 +353,6 @@ public class FTP2HDFSClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
     }
     
 	private static void missingParams() {		
@@ -402,6 +362,4 @@ public class FTP2HDFSClient {
     	 formatter.printHelp("get", header, options, footer, true);
     	 System.exit(0);
 	}
-	
- 
 }

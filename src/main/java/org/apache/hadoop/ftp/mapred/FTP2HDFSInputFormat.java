@@ -63,14 +63,14 @@ public class FTP2HDFSInputFormat extends FileInputFormat<Text, NullWritable> {
 		String pwdAlias = conf.get(Constants.FTP2HDFS_PASS_ALIAS);
 		if (pwdAlias != null) {
 			FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
-			pwd = new String(creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"), conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf));
+			pwd = new String(creds.getCredentialString(conf.get("hadoop.security.credential.provider.path"),
+					conf.get(Constants.FTP2HDFS_PASS_ALIAS), conf));
 		}
-		
+
 		if ((zftp) && (zpds)) {
 			ftpDownloader = new ZCopyBookFTPClient(conf.get(Constants.FTP2HDFS_HOST),
-					conf.get(Constants.FTP2HDFS_USERID), pwd,
-					conf.get(Constants.FTP2HDFS_TRANSFERTYPE), conf.get(Constants.FTP2HDFS_FILENAME),
-					conf.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
+					conf.get(Constants.FTP2HDFS_USERID), pwd, conf.get(Constants.FTP2HDFS_TRANSFERTYPE),
+					conf.get(Constants.FTP2HDFS_FILENAME), conf.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
 			try {
 				ftp = ftpDownloader.getFtpClient();
 			} catch (Exception e) {
@@ -83,14 +83,12 @@ public class FTP2HDFSInputFormat extends FileInputFormat<Text, NullWritable> {
 			LOG.info("PDS Splits: " + count);
 
 			for (int i = 0; i < ftpFileLst.size(); i++) {
-				LOG.info("Adding Split: "+ i);
+				LOG.info("Adding Split: " + i);
 				String fileNameOut = ftpFileLst.get(i);
 				fileName = "\'" + ftppds + "." + fileNameOut + "\'";
 				LOG.info("PDS FileName: " + fileName);
-				splits.add((InputSplit)new FTP2HDFSInputSplit(fileName));
+				splits.add((InputSplit) new FTP2HDFSInputSplit(fileName));
 			}
-
-	
 			ftp.disconnect();
 		}
 		return splits;

@@ -38,9 +38,9 @@ public class FTP2HDFSFileRecordReader extends RecordReader<Text, NullWritable> {
 	 * public FTP2HDFSFileRecordReader(FileSplit fileSplit, Configuration conf)
 	 * throws IOException { this.fileSplit = fileSplit; this.conf = conf; }
 	 */
-	
-    public FTP2HDFSFileRecordReader(InputSplit split, TaskAttemptContext context) {
-        try {
+
+	public FTP2HDFSFileRecordReader(InputSplit split, TaskAttemptContext context) {
+		try {
 			initialize(split, context);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -49,20 +49,21 @@ public class FTP2HDFSFileRecordReader extends RecordReader<Text, NullWritable> {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-      }
-@Override
+	}
+
+	@Override
 	public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
 		// TODO Auto-generated method stub
 		FTP2HDFSInputSplit ftpSplit = (FTP2HDFSInputSplit) split;
 		remoteFile = ftpSplit.getCurrentDataset();
-    }
+	}
 
 	@Override
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		if (!processed) {
-				key= new Text(remoteFile);
-				processed = true;
-				return true;
+			key = new Text(remoteFile);
+			processed = true;
+			return true;
 		}
 		return false;
 	}
@@ -86,7 +87,5 @@ public class FTP2HDFSFileRecordReader extends RecordReader<Text, NullWritable> {
 	public void close() throws IOException {
 		// do nothing
 	}
-
-
 
 }

@@ -28,15 +28,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class FTP2HDFSOutputFormat extends FileOutputFormat<Text, NullWritable> {
-	
-    @Override
-    public RecordWriter<Text, NullWritable> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-        Configuration conf = taskAttemptContext.getConfiguration();
-        String extension = "";
-        Path file = getDefaultWorkFile(taskAttemptContext, extension);
-	
-        return new FTPByteRecordWriter(file, conf, taskAttemptContext);
-    }
 
- 
+	@Override
+	public RecordWriter<Text, NullWritable> getRecordWriter(TaskAttemptContext taskAttemptContext)
+			throws IOException, InterruptedException {
+		Configuration conf = taskAttemptContext.getConfiguration();
+		String extension = "";
+		Path file = getDefaultWorkFile(taskAttemptContext, extension);
+
+		return new FTPByteRecordWriter(file, conf, taskAttemptContext);
+	}
 }

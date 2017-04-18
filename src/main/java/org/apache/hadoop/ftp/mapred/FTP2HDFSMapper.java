@@ -26,14 +26,10 @@ import java.io.IOException;
  * Base sqoop mapper class that is convenient place for common functionality.
  * Other specific mappers are highly encouraged to inherit from this class.
  */
-public abstract class FTP2HDFSMapper<KI, VI, KO, VO>
-  extends Mapper<KI, VI, KO, VO> {
-	
+public abstract class FTP2HDFSMapper<KI, VI, KO, VO> extends Mapper<KI, VI, KO, VO> {
 
-
-  @Override
-  protected void setup(Context context)
-    throws IOException, InterruptedException {
-    super.setup(context);
-  }
+	@Override
+	protected void setup(Context context) throws IOException, InterruptedException {
+		super.setup(context);
+	}
 }

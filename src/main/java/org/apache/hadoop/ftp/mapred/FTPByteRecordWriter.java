@@ -36,33 +36,32 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
-    private DataOutputStream out;
+	private DataOutputStream out;
 	private ZCopyBookFTPClient ftpDownloader;
 	private FTPClient ftp = null;
 	private InputStream in = null;
 	private static final Log LOG = LogFactory.getLog(FTP2HDFSOutputFormat.class.getName());
-    private Configuration conf;
-    private Path path;
-    private FileSystem fs;
+	private Configuration conf;
+	private Path path;
+	private FileSystem fs;
 
-    
-
-    public FTPByteRecordWriter(Path path, Configuration confIn, TaskAttemptContext taskAttemptContext) {
+	public FTPByteRecordWriter(Path path, Configuration confIn, TaskAttemptContext taskAttemptContext) {
 		String pwd = confIn.get(Constants.FTP2HDFS_PASS);
 		String pwdAlias = confIn.get(Constants.FTP2HDFS_PASS_ALIAS);
 		if (pwdAlias != null) {
-			LOG.info("Cred Provider: "+confIn.get("hadoop.security.credential.provider.path"));
-			LOG.info("Cred Alias: "+confIn.get(Constants.FTP2HDFS_PASS_ALIAS));
+			LOG.info("Cred Provider: " + confIn.get("hadoop.security.credential.provider.path"));
+			LOG.info("Cred Alias: " + confIn.get(Constants.FTP2HDFS_PASS_ALIAS));
 
 			FTP2HDFSCredentialProvider creds = new FTP2HDFSCredentialProvider();
-			pwd = new String(creds.getCredentialString(confIn.get("hadoop.security.credential.provider.path"), confIn.get(Constants.FTP2HDFS_PASS_ALIAS), confIn));
+			pwd = new String(creds.getCredentialString(confIn.get("hadoop.security.credential.provider.path"),
+					confIn.get(Constants.FTP2HDFS_PASS_ALIAS), confIn));
 		}
-		LOG.info("FTP2HDFS_HOST: "+confIn.get(Constants.FTP2HDFS_HOST));
-		LOG.info("FTP2HDFS_TRANSFERTYPE: "+confIn.get(Constants.FTP2HDFS_TRANSFERTYPE));
-		LOG.info("FTP2HDFS_TRANSFERTYPE_OPTS: "+confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
+		LOG.info("FTP2HDFS_HOST: " + confIn.get(Constants.FTP2HDFS_HOST));
+		LOG.info("FTP2HDFS_TRANSFERTYPE: " + confIn.get(Constants.FTP2HDFS_TRANSFERTYPE));
+		LOG.info("FTP2HDFS_TRANSFERTYPE_OPTS: " + confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
 
-		this.ftpDownloader = new ZCopyBookFTPClient(confIn.get(Constants.FTP2HDFS_HOST), confIn.get(Constants.FTP2HDFS_USERID),
-				pwd, confIn.get(Constants.FTP2HDFS_TRANSFERTYPE), null,
+		this.ftpDownloader = new ZCopyBookFTPClient(confIn.get(Constants.FTP2HDFS_HOST),
+				confIn.get(Constants.FTP2HDFS_USERID), pwd, confIn.get(Constants.FTP2HDFS_TRANSFERTYPE), null,
 				confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
 		try {
 			this.ftp = ftpDownloader.getFtpClient();
@@ -71,57 +70,56 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 			e.printStackTrace();
 		}
 		this.conf = confIn;
-        this.path = path;
-    }
+		this.path = path;
+	}
 
-    @Override
-    public void write(Text key, NullWritable value) throws IOException {
+	@Override
+	public void write(Text key, NullWritable value) throws IOException {
 
-            String remoteFile = key.toString();
-            key=null;
-            value = null;
-            
-            String parentPath = path.getParent().toString();
-            String fileString = parentPath+"/"+remoteFile.replaceAll("\'", "");
-            Path file = new Path(fileString);
-            this.fs = file.getFileSystem(conf);
-            this.out = fs.create(file,false);
-            
-            LOG.info("FTP CLient Downloading" +remoteFile);
+		String remoteFile = key.toString();
+		key = null;
+		value = null;
 
-            try {
-                byte[] buf = new byte[1048576];
-                int bytes_read = 0;
-                LOG.info("FTP CLient is Connected" +this.ftp.isConnected());
-                this.in = this.ftp.retrieveFileStream(remoteFile);
+		String parentPath = path.getParent().toString();
+		String fileString = parentPath + "/" + remoteFile.replaceAll("\'", "");
+		Path file = new Path(fileString);
+		this.fs = file.getFileSystem(conf);
+		this.out = fs.create(file, false);
 
-                do {
-                    bytes_read = this.in.read(buf, 0, buf.length);
+		LOG.info("FTP CLient Downloading" + remoteFile);
 
-                    if (bytes_read < 0) {
-                        /* Handle EOF however you want */
-                    }
+		try {
+			byte[] buf = new byte[1048576];
+			int bytes_read = 0;
+			LOG.info("FTP CLient is Connected" + this.ftp.isConnected());
+			this.in = this.ftp.retrieveFileStream(remoteFile);
 
-                    if (bytes_read > 0)
-                         out.write(buf, 0, bytes_read);
-                    	 out.flush();
-                    	 
-                } while (bytes_read >= 0);
+			do {
+				bytes_read = this.in.read(buf, 0, buf.length);
 
+				if (bytes_read < 0) {
+					/* Handle EOF however you want */
+				}
 
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-            }
-            boolean success = this.ftp.completePendingCommand();
-            if (success) {
-            	LOG.info("File "+remoteFile+" has been downloaded successfully.");
-            }
-    }
+				if (bytes_read > 0)
+					out.write(buf, 0, bytes_read);
+				out.flush();
 
-    @Override
-    public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-        this.out.close();
+			} while (bytes_read >= 0);
+
+		} catch (IOException e) {
+			e.printStackTrace(System.err);
+		}
+		boolean success = this.ftp.completePendingCommand();
+		if (success) {
+			LOG.info("File " + remoteFile + " has been downloaded successfully.");
+		}
+	}
+
+	@Override
+	public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+		this.out.close();
 		this.in.close();
 		this.ftp.disconnect();
-    }
+	}
 }
