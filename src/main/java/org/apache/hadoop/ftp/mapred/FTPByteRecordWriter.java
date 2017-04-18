@@ -118,8 +118,17 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 
 	@Override
 	public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-		this.out.close();
-		this.in.close();
-		this.ftp.disconnect();
+		if (this.out != null) {
+			this.out.close();
+		}
+		if (this.in != null) {
+			this.in.close();
+		}
+		if (this.ftp != null) {
+			if (this.ftp.isConnected()) {
+				this.ftp.logout();
+				this.ftp.disconnect();
+			}
+		}
 	}
 }
