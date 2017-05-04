@@ -25,8 +25,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.ftp.FTPException;
+import org.apache.hadoop.ftp.FTPLoginException;
 import org.apache.hadoop.ftp.ZCopyBookFTPClient;
 import org.apache.hadoop.ftp.password.FTP2HDFSCredentialProvider;
 import org.apache.hadoop.io.NullWritable;
@@ -70,15 +73,30 @@ public class FTP2HDFSInputFormat extends FileInputFormat<Text, NullWritable> {
 		if ((zftp) && (zpds)) {
 			ftpDownloader = new ZCopyBookFTPClient(conf.get(Constants.FTP2HDFS_HOST),
 					conf.get(Constants.FTP2HDFS_USERID), pwd, conf.get(Constants.FTP2HDFS_TRANSFERTYPE),
-					conf.get(Constants.FTP2HDFS_FILENAME), conf.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
+					conf.get(Constants.FTP2HDFS_FILENAME), conf.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS),conf.get(Constants.FTP2HDFS_TAPE_OPTS));
 			try {
 				ftp = ftpDownloader.getFtpClient();
-			} catch (Exception e) {
+				System.out.println("FTP Server Connected: "+ftp.isConnected());
+				if (!(ftp.isConnected())) {
+					System.out.println("FTP Server is not available exiting");
+					throw new FTPException("FTP Server is not available/Connected");
+				}
+			} catch (FTPConnectionClosedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				throw new IOException("FTP Server is not available");
+			} catch (FTPLoginException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new IOException("FTP Login is invalid");
+
 			}
 			System.out.println("PDS: " + ftppds);
 			ftpFileLst = ftpDownloader.listFiles("\'" + ftppds + "\'");
+			if (ftpFileLst.isEmpty()) {
+				System.out.println("No Files to Download - Exit");
+				System.exit(0);
+			}
 			int count = ftpFileLst.size();
 			LOG.info("PDS Splits: " + count);
 

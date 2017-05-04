@@ -62,7 +62,7 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 
 		this.ftpDownloader = new ZCopyBookFTPClient(confIn.get(Constants.FTP2HDFS_HOST),
 				confIn.get(Constants.FTP2HDFS_USERID), pwd, confIn.get(Constants.FTP2HDFS_TRANSFERTYPE), null,
-				confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS));
+				confIn.get(Constants.FTP2HDFS_TRANSFERTYPE_OPTS),confIn.get(Constants.FTP2HDFS_TAPE_OPTS));
 		try {
 			this.ftp = ftpDownloader.getFtpClient();
 		} catch (Exception e) {

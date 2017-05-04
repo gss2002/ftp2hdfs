@@ -29,6 +29,7 @@ import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPClientConfig;
+import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPReply;
 
 public class ZCopyBookFTPClient {
@@ -39,21 +40,23 @@ public class ZCopyBookFTPClient {
 	String pwd = null;
 	String fileTransferList = null;
 	String fileName = null;
+	String ftpTapeOptions = null;
 	String ftpTypeOpts = null;
 
 	private static final Log LOG = LogFactory.getLog(ZCopyBookFTPClient.class.getName());
 
 	public ZCopyBookFTPClient(String ftphostIn, String userIdIn, String pwdIn, String fileTypeIn, String fileIn,
-			String ftpTypeOptsIn) {
+			String ftpTypeOptsIn, String ftpTapeOptions) {
 		this.fileType = fileTypeIn;
 		this.host = ftphostIn;
 		this.user = userIdIn;
 		this.pwd = pwdIn;
+		this.ftpTapeOptions = ftpTapeOptions;
 		this.fileName = fileIn;
 		this.ftpTypeOpts = ftpTypeOptsIn;
 	}
 
-	public FTPClient getFtpClient() throws Exception {
+	public FTPClient getFtpClient() throws FTPConnectionClosedException, IOException, FTPLoginException {
 		ftp = new FTPClient();
 		FTPClientConfig config = new FTPClientConfig(FTPClientConfig.SYST_MVS);
 		ftp.configure(config);
@@ -67,15 +70,24 @@ public class ZCopyBookFTPClient {
 		reply = ftp.getReplyCode();
 		if (!FTPReply.isPositiveCompletion(reply)) {
 			ftp.disconnect();
-			throw new Exception("Exception in connecting to FTP Server");
+			throw new FTPConnectionClosedException("Exception in connecting to FTP Server");
 		}
 		System.out.println(Charset.defaultCharset());
-		ftp.login(user, pwd);
+		boolean loginSuccess = ftp.login(user, pwd);
+		if (!(loginSuccess)) {
+			String loginReplyString = ftp.getReplyString();
+			System.out.println("Ftp Login Failed: "+loginReplyString);
+			throw new FTPLoginException("Login Failed to FTP Server");
+		}
 		if (fileType.equalsIgnoreCase("vb")) {
 			ftp.setFileType(FTP.BINARY_FILE_TYPE);
 			ftp.doCommandAsStrings("SITE", "RDW");
 			ftp.doCommandAsStrings("SITE", "RECFM=VB");
-			ftp.doCommandAsStrings("SITE", "READTAPEFormat=V");
+			if (ftpTapeOptions != null) {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat="+ftpTapeOptions.trim());
+			} else {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat=V");
+			}
 			ftp.doCommandAsStrings("SITE", "TAPEREADSTREAM");
 			ftp.doCommandAsStrings("type", "E");
 			ftp.doCommandAsStrings("mode", "S");
@@ -88,7 +100,11 @@ public class ZCopyBookFTPClient {
 				String ftpTypeOptsOut = ftpTypeOpts.replace(",", " ");
 				ftp.doCommandAsStrings("SITE", "RECFM=FB " + ftpTypeOptsOut);
 			}
-			ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			if (ftpTapeOptions != null) {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat="+ftpTapeOptions.trim());
+			} else {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			}
 			ftp.doCommandAsStrings("SITE", "TAPEREADSTREAM");
 			ftp.doCommandAsStrings("type", "E");
 			ftp.doCommandAsStrings("mode", "S");
@@ -97,7 +113,11 @@ public class ZCopyBookFTPClient {
 		if (fileType.equalsIgnoreCase("zascii")) {
 			ftp.setFileType(FTP.ASCII_FILE_TYPE);
 			ftp.doCommandAsStrings("SITE", "RECFM=FB");
-			ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			if (ftpTapeOptions != null) {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat="+ftpTapeOptions.trim());
+			} else {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			}
 			ftp.doCommandAsStrings("SITE", "TAPEREADSTREAM");
 			ftp.doCommandAsStrings("type", "E");
 			ftp.doCommandAsStrings("mode", "S");
@@ -106,7 +126,11 @@ public class ZCopyBookFTPClient {
 		if (fileType.equalsIgnoreCase("zbinary")) {
 			ftp.setFileType(FTP.BINARY_FILE_TYPE);
 			ftp.doCommandAsStrings("SITE", "RECFM=FB");
-			ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			if (ftpTapeOptions != null) {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat="+ftpTapeOptions.trim());
+			} else {
+				ftp.doCommandAsStrings("SITE", "READTAPEFormat=F");
+			}
 			ftp.doCommandAsStrings("SITE", "TAPEREADSTREAM");
 			ftp.doCommandAsStrings("type", "E");
 			ftp.doCommandAsStrings("mode", "S");
@@ -120,18 +144,40 @@ public class ZCopyBookFTPClient {
 
 		ArrayList<String> ftpFileLst = new ArrayList<String>();
 		try {
-			ftp.changeWorkingDirectory(remoteFilePath);
+			ftp.cwd(remoteFilePath);
+			boolean workingDirChanged = ftp.changeWorkingDirectory(remoteFilePath);
+			int returnCode = ftp.getReplyCode();
+			String replyString = ftp.getReplyString();
+			System.out.println("FTP Change Working Directory Reply Code: "+returnCode);
+			if (workingDirChanged) {
+				System.out.println("Current Working Direcotory: "+ftp.printWorkingDirectory());
+			} else {
+				System.out.println("Working Directory does not exist");
+				System.out.println("FTP Working Directory Reply: "+replyString);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
 			System.out.println("FileNames: " + ftp.listNames());
+			int returnCode = ftp.getReplyCode();
+			System.out.println("FTP listNames in WorkingDirectory: "+returnCode);
 			String ftpFile[] = ftp.listNames(fileName);
-			System.out.println("Files in the DataSet: " + ftpFile.length);
-			for (String f : ftpFile) {
-				System.out.println("FileName: " + f.toString());
-				ftpFileLst.add(f.toString());
+			returnCode = ftp.getReplyCode();
+			String replyString = ftp.getReplyString();
+			System.out.println("FTP listNames ("+fileName+") in WorkingDirectory: "+returnCode);
+			if (ftpFile != null) {
+				if (ftpFile.length > 0) {
+					System.out.println("Files in the DataSet: " + ftpFile.length);
+					for (String f : ftpFile) {
+						System.out.println("FileName: " + f.toString());
+						ftpFileLst.add(f.toString());
+					}
+				}
+			} else {
+				System.out.println("No Files Available for Download");
+				System.out.println("FTP List Files Reply: "+replyString);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

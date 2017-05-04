@@ -31,6 +31,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -66,6 +67,7 @@ public class FTP2HDFSClient {
 	static String pwdAlias = null;
 	static String pwdCredPath = null;
 	static String downloadFile = null;
+	static String ftpTapeTransferType = null;
 	static UserGroupInformation ugi = null;
 	static Options options = new Options();
 
@@ -195,6 +197,8 @@ public class FTP2HDFSClient {
 				"FTP TransferType --transfer_type requires (vb,fb,ascii,binary,zascii,zbinary)");
 		options.addOption("transfer_type_opts", true,
 				"FTP TransferType Options --transfer_type_opts FIXrecfm=80,LRECL=80,BLKSIZE=27920");
+		options.addOption("tape_transfer_type", true,
+				"FTP TransferType Options --tape_transfer_type F,V,S,X");
 		options.addOption("ftp_folder", true, "FTP Server Folder --ftp_folder /foldername/ ");
 		options.addOption("ftp_pds", true,
 				"FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
@@ -263,6 +267,9 @@ public class FTP2HDFSClient {
 						}
 						if (cmd.hasOption("ftp_folder")) {
 							ftpfolder = cmd.getOptionValue("ftp_folder");
+						}
+						if (zftp && cmd.hasOption("tape_transfer_type")) {
+							ftpTapeTransferType = cmd.getOptionValue("tape_transfer_type");
 						}
 					}
 					if (fileType.equalsIgnoreCase("ascii") || fileType.equalsIgnoreCase("binary")) {
@@ -361,7 +368,7 @@ public class FTP2HDFSClient {
 
 		try {
 			if ((zftp) && (zpds)) {
-				ftpDownloader = new ZCopyBookFTPClient(ftphost, userId, pwd, fileType, ftpFileName, ftptypeopts);
+				ftpDownloader = new ZCopyBookFTPClient(ftphost, userId, pwd, fileType, ftpFileName, ftptypeopts, ftpTapeTransferType);
 				ftp = ftpDownloader.getFtpClient();
 				System.out.println("PDS: " + ftppds);
 				ftpFileLst = ftpDownloader.listFiles("\'" + ftppds + "\'");
@@ -374,8 +381,17 @@ public class FTP2HDFSClient {
 					downloadFile();
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (FTPLoginException e) {
+			System.out.println("FTP Login is invalid");
+			System.exit(1);
+		} catch (FTPConnectionClosedException e) {
+			// TODO Auto-generated catch block
+			System.out.println("FTP Server Closed Connection/Unavailable");
+			System.exit(1);		
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("FTP Server Closed Connection/Unavailable or IO/Socket Exception");
+			System.exit(1);		
 		}
 
 		System.out.println("FTP File downloaded successfully");

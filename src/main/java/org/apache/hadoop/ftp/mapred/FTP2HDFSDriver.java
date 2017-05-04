@@ -73,6 +73,8 @@ public class FTP2HDFSDriver {
 	static UserGroupInformation ugi = null;
 	static Options options = new Options();
 	String ftpHost = null;
+	static String ftpTapeTransferType = null;
+
 
 	public static void main(String[] args) throws Exception {
 
@@ -91,6 +93,8 @@ public class FTP2HDFSDriver {
 				"FTP TransferType --transfer_type requires (vb,fb,ascii,binary,zascii,zbinary)");
 		options.addOption("transfer_type_opts", true,
 				"FTP TransferType Options --transfer_type_opts FIXrecfm=80,LRECL=80,BLKSIZE=27920");
+		options.addOption("tape_transfer_type", true,
+				"FTP TransferType Options --tape_transfer_type F,V,S,X");
 		options.addOption("ftp_folder", true, "FTP Server Folder --ftp_folder /foldername/ ");
 		options.addOption("ftp_pds", true,
 				"FTP Partitioned Data set Z/os Folder --ftp_pds TEST.PDS.DATASET.MNTH.M201209 ");
@@ -166,6 +170,9 @@ public class FTP2HDFSDriver {
 						}
 						if (cmd.hasOption("ftp_folder")) {
 							ftpfolder = cmd.getOptionValue("ftp_folder");
+						}
+						if (zftp && cmd.hasOption("tape_transfer_type")) {
+							ftpTapeTransferType = cmd.getOptionValue("tape_transfer_type");
 						}
 					}
 					if (fileType.equalsIgnoreCase("ascii") || fileType.equalsIgnoreCase("binary")) {
@@ -249,6 +256,9 @@ public class FTP2HDFSDriver {
 		if (ftpfolder != null) {
 			conf.set(Constants.FTP2HDFS_FOLDER, ftpfolder);
 		}
+		if (ftpTapeTransferType != null ) {
+			conf.set(Constants.FTP2HDFS_TAPE_OPTS, ftpTapeTransferType.trim());
+		}
 		conf.setBoolean(Constants.FTP2HDFS_ZPDS, zpds);
 		conf.setBoolean(Constants.FTP2HDFS_ZFTP, zftp);
 		conf.set("mapreduce.map.java.opts", "-Xmx5120m");
@@ -292,8 +302,7 @@ public class FTP2HDFSDriver {
 	    conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
 
 
-		@SuppressWarnings("deprecation")
-		Job job = new Job(conf, "FTP2HDFS-" + jobname);
+		Job job = Job.getInstance(conf, "FTP2HDFS-" + jobname);
 		job.addCacheFile(new Path("/apps/ftp2hdfs/commons-net.jar").toUri());
 		job.addArchiveToClassPath(new Path("/apps/ftp2hdfs/commons-net.jar"));
 		job.setJarByClass(FTP2HDFSDriver.class);

@@ -31,4 +31,5 @@ public class Constants {
 	public static final String FTP2HDFS_OUTPUTDIR = "ftp2hdfs.hdfs.outdir";
 	public static final String FTP2HDFS_FOLDER = "ftp2hdfs.folder";
 	public static final String FTP2HDFS_ZFTP = "ftp2hdfs.zftp";
+	public static final String FTP2HDFS_TAPE_OPTS = "ftp2hdfs.tape.options";
 }
