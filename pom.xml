@@ -24,7 +24,7 @@
 		<install.user>root</install.user>
 		<java.version>1.8</java.version>
 		<hadoop.version>2.7.1</hadoop.version>
-		<commons.net.version>3.3</commons.net.version>
+		<commons.net.version>3.6</commons.net.version>
 	</properties>
 
 	<profiles>

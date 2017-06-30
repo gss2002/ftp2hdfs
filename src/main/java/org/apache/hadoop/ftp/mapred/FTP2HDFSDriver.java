@@ -36,6 +36,7 @@ import org.apache.hadoop.ftp.password.FTP2HDFSCredentialProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
@@ -288,6 +289,8 @@ public class FTP2HDFSDriver {
 		if (ftpTransferLimitTrue) {
 			conf.set("mapreduce.job.running.map.limit", ftpTransferLimit);
 		}
+	    conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+
 
 		@SuppressWarnings("deprecation")
 		Job job = new Job(conf, "FTP2HDFS-" + jobname);

@@ -83,47 +83,56 @@ public class FTPByteRecordWriter extends RecordWriter<Text, NullWritable> {
 		String parentPath = path.getParent().toString();
 		String fileString = parentPath + "/" + remoteFile.replaceAll("\'", "");
 		Path file = new Path(fileString);
+		String outputPath = conf.get("mapreduce.output.fileoutputformat.outputdir");
+
 		this.fs = file.getFileSystem(conf);
-		this.out = fs.create(file, false);
+		if (!(fs.exists(new Path(outputPath + "/" + remoteFile.replaceAll("\'", ""))))) {
+			this.out = fs.create(file, false);
+			LOG.info("Buffer Size: " + ftp.getBufferSize());
+			LOG.info("Recieve DataSocketBuffer Size: " + ftp.getReceiveDataSocketBufferSize());
+			LOG.info("Send DataSocketBuffer Size: " + ftp.getSendDataSocketBufferSize());
 
-		LOG.info("FTP CLient Downloading" + remoteFile);
+			LOG.info("FTP CLient Downloading" + remoteFile);
 
-		try {
-			byte[] buf = new byte[1048576];
-			int bytes_read = 0;
-			LOG.info("FTP CLient is Connected" + this.ftp.isConnected());
-			this.in = this.ftp.retrieveFileStream(remoteFile);
+			try {
+				byte[] buf = new byte[1048576];
+				int bytes_read = 0;
+				LOG.info("FTP CLient is Connected" + this.ftp.isConnected());
+				this.in = this.ftp.retrieveFileStream(remoteFile);
 
-			do {
-				bytes_read = this.in.read(buf, 0, buf.length);
+				do {
+					bytes_read = this.in.read(buf, 0, buf.length);
 
-				if (bytes_read < 0) {
-					/* Handle EOF however you want */
-				}
+					if (bytes_read < 0) {
+						/* Handle EOF however you want */
+					}
 
-				if (bytes_read > 0)
-					out.write(buf, 0, bytes_read);
-				out.flush();
+					if (bytes_read > 0)
+						out.write(buf, 0, bytes_read);
+					out.flush();
 
-			} while (bytes_read >= 0);
+				} while (bytes_read >= 0);
 
-		} catch (IOException e) {
-			e.printStackTrace(System.err);
-		}
-		boolean success = this.ftp.completePendingCommand();
-		if (success) {
-			LOG.info("File " + remoteFile + " has been downloaded successfully.");
+			} catch (IOException e) {
+				e.printStackTrace(System.err);
+			}
+			if (this.out != null) {
+				this.out.close();
+			}
+			if (this.in != null) {
+				this.in.close();
+			}
+			boolean success = this.ftp.completePendingCommand();
+			if (success) {
+				LOG.info("File " + remoteFile + " has been downloaded successfully.");
+			}
+		} else {
+			LOG.info("File Exists " + remoteFile + " has been skipped.");
 		}
 	}
 
 	@Override
 	public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-		if (this.out != null) {
-			this.out.close();
-		}
-		if (this.in != null) {
-			this.in.close();
-		}
 		if (this.ftp != null) {
 			if (this.ftp.isConnected()) {
 				this.ftp.logout();

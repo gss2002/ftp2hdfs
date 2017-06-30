@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -38,4 +39,8 @@ public class FTP2HDFSOutputFormat extends FileOutputFormat<Text, NullWritable> {
 
 		return new FTPByteRecordWriter(file, conf, taskAttemptContext);
 	}
+
+    public void checkOutputSpecs(final JobContext context) throws IOException {
+
+    }
 }
